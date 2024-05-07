@@ -1,4 +1,4 @@
-package com.itu.controller;
+package mg.itu.prom16;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-// @WebServlet(name = "FrontController", urlPatterns = {"/"})
 public class FrontController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
