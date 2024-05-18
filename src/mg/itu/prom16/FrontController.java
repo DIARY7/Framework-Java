@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.net.URI;
 import java.net.URL;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -56,7 +55,6 @@ public class FrontController extends HttpServlet {
         URL packageUrl = classLoader.getResource(path);
         ArrayList<String> liste = new ArrayList<>();
         if (packageUrl!=null) {
-            URI packageUri = packageUrl.toURI();
             File packageFile = new File(packageUrl.getFile());
             //  = new File(packageUrL);
             if (packageFile.exists() && packageFile.isDirectory()) {
