@@ -1,10 +1,13 @@
 package mg.itu.prom16;
 import mg.itu.prom16.annotation.*;
+import mg.itu.prom16.utilitaire.Mapping;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.net.URL;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -13,10 +16,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 
 public class FrontController extends HttpServlet {
-    // Ho an'ny sprint 1
-    boolean checked = false ; 
+    // Ho an'ny sprint 1,2
     ArrayList<String> listController;
-
+    HashMap<String,Mapping> dicoMapping;//Clé ny URL ,d mapping ny value
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         processRequest(req, resp);
@@ -27,10 +29,12 @@ public class FrontController extends HttpServlet {
     }
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException{
         PrintWriter out= resp.getWriter();
-        
-        out.println("Voici les listes des controller");
-        for (int i = 0; i < listController.size() ; i++) {
-            out.println(listController.get(i));
+        // out.println("Voici les listes des controller");
+        // for (int i = 0; i < listController.size() ; i++) {
+        //     out.println(listController.get(i));
+        // }
+        for (int i = 0; i <dicoMapping.size() ; i++) {
+            
         }
     }
 
@@ -38,16 +42,15 @@ public class FrontController extends HttpServlet {
     public void init() throws ServletException {
         super.init();
         try {
-            if (!checked) {
-                String name_package = getServletConfig().getInitParameter("packageController");
-                this.listController =  this.getCtrlInPackage(name_package);
-                this.checked = true;
-            }    
+            String name_package = getServletConfig().getInitParameter("packageController");
+            this.listController =  this.getCtrlInPackage(name_package);
+            
         } catch (Exception e) {
             // TODO: handle exception
         }
         
     }
+    
     /* sprint1  */
     public ArrayList<String> getCtrlInPackage( String name_package) throws Exception {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -56,7 +59,6 @@ public class FrontController extends HttpServlet {
         ArrayList<String> liste = new ArrayList<>();
         if (packageUrl!=null) {
             File packageFile = new File(packageUrl.getFile());
-            //  = new File(packageUrL);
             if (packageFile.exists() && packageFile.isDirectory()) {
                 File[] files = packageFile.listFiles();
                 for (int i = 0; i < files.length; i++) {
@@ -65,7 +67,9 @@ public class FrontController extends HttpServlet {
                         Class temp_class = Class.forName( name_package +"."+ temp_name_classe);
                         if (temp_class.getAnnotation(AnnotationCtrl.class)!=null) {
                             liste.add(temp_name_classe);
+                            setDicoMapping(temp_class, temp_name_classe); // Sprint 2
                         }
+                        
                     }
                 }
             }
@@ -75,4 +79,15 @@ public class FrontController extends HttpServlet {
         return liste; 
         
     }
+    /* sprint2 */
+    public void setDicoMapping(Class c,String nameClass){
+        Method[] methodes = c.getMethods();
+        for (int j = 0; j < methodes.length; j++) {
+            Get annotGet = methodes[j].getAnnotation(Get.class); 
+            if ( annotGet !=null ) {
+                dicoMapping.put(annotGet.url(), new Mapping( nameClass , methodes[j].getName())) ;
+            }
+        }
+    }
+    
 }
