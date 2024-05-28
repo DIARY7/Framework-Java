@@ -37,17 +37,21 @@ public class FrontController extends HttpServlet {
         // }
         boolean existMapping = false;
         String urlTaper = req.getRequestURL().toString().split(baseUrl)[1];
-        out.println("L'url taper "+urlTaper);
         for (String key : dicoMapping.keySet()) {
             if (key.compareTo(urlTaper)==0) {
                 existMapping = true;
-                out.println("Key "+ key);
                 break;
             }
         }
         if (existMapping) {
-            out.println( "Methode correpondant : "+ this.dicoMapping.get(urlTaper).getMethodName());
-            out.println( "Dans la classe : "+ this.dicoMapping.get(urlTaper).getClassName());
+            try {
+                Object value = invoqueMethode(dicoMapping.get(urlTaper));
+                out.println(value.toString());    
+            } catch (Exception e) {
+                // TODO: handle exception
+                out.println(e);
+            }
+                         
         }
         else{
             out.println("URL introuvable");
@@ -104,9 +108,15 @@ public class FrontController extends HttpServlet {
         for (int j = 0; j < methodes.length; j++) {
             Get annotGet = methodes[j].getAnnotation(Get.class); 
             if ( annotGet !=null ) {
-                dicoMapping.put(annotGet.value(), new Mapping( c.getSimpleName() , methodes[j].getName()));
+                dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName()));
             }
         }
+    }
+    /* sprint3 */
+    private Object invoqueMethode(Mapping map) throws Exception {
+        Class c =  Class.forName(map.getClassName());
+        Method meth = c.getMethod(map.getMethodName());
+        return meth.invoke(c.getDeclaredConstructor().newInstance());
     }
     
 }
