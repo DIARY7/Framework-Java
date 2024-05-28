@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-
 public class FrontController extends HttpServlet {
     // Ho an'ny sprint 1,2
     ArrayList<String> listController;
@@ -29,6 +28,7 @@ public class FrontController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         processRequest(req, resp);
     }
+    
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException{
         PrintWriter out= resp.getWriter();
         // out.println("Voici les listes des controller");
@@ -52,6 +52,7 @@ public class FrontController extends HttpServlet {
         else{
             out.println("URL introuvable");
         }
+        
     }
 
     @Override
@@ -103,7 +104,7 @@ public class FrontController extends HttpServlet {
         for (int j = 0; j < methodes.length; j++) {
             Get annotGet = methodes[j].getAnnotation(Get.class); 
             if ( annotGet !=null ) {
-                dicoMapping.put(annotGet.url(), new Mapping( c.getSimpleName() , methodes[j].getName()));
+                dicoMapping.put(annotGet.value(), new Mapping( c.getSimpleName() , methodes[j].getName()));
             }
         }
     }
