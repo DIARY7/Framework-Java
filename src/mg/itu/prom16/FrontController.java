@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.ExecutorCompletionService;
+
 import java.net.URL;
 
 import jakarta.servlet.RequestDispatcher;
@@ -23,6 +23,8 @@ public class FrontController extends HttpServlet {
     ArrayList<String> listController;
     HashMap<String,Mapping> dicoMapping = new HashMap<String,Mapping>() ;//Clé ny URL ,d mapping ny value
     String baseUrl;
+    String erreur=null; // Sprint5
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         processRequest(req, resp);
@@ -38,26 +40,30 @@ public class FrontController extends HttpServlet {
         // for (int i = 0; i < listController.size() ; i++) {
         //     out.println(listController.get(i));
         // }
+        if (erreur!=null) {
+            out.println(erreur);
+            return;
+        }
         boolean existMapping = false;
         String urlTaper = req.getRequestURL().toString().split(baseUrl)[1];
         for (String key : dicoMapping.keySet()) {
             if (key.compareTo(urlTaper)==0) {
                 existMapping = true;
-                break;
             }
         }
+       
         if (existMapping) {
             try {
                 Object value = invoqueMethode(dicoMapping.get(urlTaper));
                 ModelViewtoJsp(req,resp,value); // Sprint 4    
             } catch (Exception e) {
                 // TODO: handle exception
-                out.println(e);
+                out.println(e.getMessage());
                 e.printStackTrace();
             }
                          
         }
-        else{
+        else{    
             out.println("URL introuvable");
         }
         
@@ -67,13 +73,22 @@ public class FrontController extends HttpServlet {
     public void init() throws ServletException {
         super.init();
         try {
+            
             String name_package = getServletConfig().getInitParameter("packageController");
+            
             this.baseUrl = getServletConfig().getInitParameter("baseUrl");
             this.listController =  this.getCtrlInPackage(name_package);
-            System.out.println("Le size du HashMap "+dicoMapping.size());
+            
+            if (this.listController.size()==0) {    
+                throw new Exception("Il n'y a aucun controller dans "+name_package);
+            }
+            
+            
+            
         } catch (Exception e) {
             // TODO: handle exception
             System.out.println(e);
+            this.erreur = e.getMessage();
         }
         
     }
@@ -84,8 +99,13 @@ public class FrontController extends HttpServlet {
         String path = name_package.replace(".", "/");
         URL packageUrl = classLoader.getResource(path);
         ArrayList<String> liste = new ArrayList<>();
+        if (packageUrl==null) {
+            
+            throw new Exception("Le package "+ name_package +" n'existe pas");
+        }
         if (packageUrl!=null) {
             File packageFile = new File(packageUrl.getFile());
+            
             if (packageFile.exists() && packageFile.isDirectory()) {
                 File[] files = packageFile.listFiles();
                 for (int i = 0; i < files.length; i++) {
@@ -100,6 +120,7 @@ public class FrontController extends HttpServlet {
                     }
                 }
             }
+           
             
         }
     
@@ -107,11 +128,15 @@ public class FrontController extends HttpServlet {
         
     }
     /* sprint2 */
-    public void setDicoMapping(Class c){
+    public void setDicoMapping(Class c) throws Exception {
         Method[] methodes = c.getMethods();
+        System.out.println("Le nombre des methodes dans  "+ c.getSimpleName() + " est : "+methodes.length);
         for (int j = 0; j < methodes.length; j++) {
             Get annotGet = methodes[j].getAnnotation(Get.class); 
             if ( annotGet !=null ) {
+                if (dicoMapping.get(annotGet.value())!=null) {
+                    throw new Exception("Duplication de GetMapping "+annotGet.value());
+                }
                 dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName()));
             }
         }
@@ -127,7 +152,8 @@ public class FrontController extends HttpServlet {
         if (value instanceof String) {
             resp.getWriter().println(value.toString());
         }
-        else{
+        else if (value instanceof ModelView) 
+        {
             ModelView mv = (ModelView) value;
             HashMap<String, Object> dico = mv.getData();
             for (String key : dico.keySet()) {
@@ -135,6 +161,9 @@ public class FrontController extends HttpServlet {
             }
             RequestDispatcher dispat = req.getRequestDispatcher("/"+mv.getUrl());
             dispat.forward(req,resp);
+        }
+        else{
+            throw new Exception("Valeur de retour non Valide");
         }
         
     } 
