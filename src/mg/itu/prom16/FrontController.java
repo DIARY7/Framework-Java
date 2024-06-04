@@ -1,6 +1,7 @@
 package mg.itu.prom16;
 import mg.itu.prom16.annotation.*;
 import mg.itu.prom16.utilitaire.Mapping;
+import mg.itu.prom16.utilitaire.ModelView;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,8 +9,10 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-
+import java.util.concurrent.ExecutorCompletionService;
 import java.net.URL;
+
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,10 +49,11 @@ public class FrontController extends HttpServlet {
         if (existMapping) {
             try {
                 Object value = invoqueMethode(dicoMapping.get(urlTaper));
-                out.println(value.toString());    
+                ModelViewtoJsp(req,resp,value); // Sprint 4    
             } catch (Exception e) {
                 // TODO: handle exception
                 out.println(e);
+                e.printStackTrace();
             }
                          
         }
@@ -118,5 +122,21 @@ public class FrontController extends HttpServlet {
         Method meth = c.getMethod(map.getMethodName());
         return meth.invoke(c.getDeclaredConstructor().newInstance());
     }
+    /* sprint 4 */
+    private void ModelViewtoJsp(HttpServletRequest req, HttpServletResponse resp,Object value) throws Exception {
+        if (value instanceof String) {
+            resp.getWriter().println(value.toString());
+        }
+        else{
+            ModelView mv = (ModelView) value;
+            HashMap<String, Object> dico = mv.getData();
+            for (String key : dico.keySet()) {
+                req.setAttribute(key, dico.get(key));
+            }
+            RequestDispatcher dispat = req.getRequestDispatcher("/"+mv.getUrl());
+            dispat.forward(req,resp);
+        }
+        
+    } 
     
 }
