@@ -6,12 +6,12 @@ public class Mapping {
     String className;
     String methodName;
     Method fonction;
-    public Mapping(String className, String methodName) {
+    public Mapping(String className, String methodName,Method fonction) {
         this.className = className;
         try {
             Class c = Class.forName(className);
             this.methodName = methodName;
-            this.fonction = c.getMethod(methodName);
+            this.fonction = fonction;
         } catch (Exception e) {
             // TODO: handle exception
         }

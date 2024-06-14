@@ -2,11 +2,13 @@ package mg.itu.prom16;
 import mg.itu.prom16.annotation.*;
 import mg.itu.prom16.utilitaire.Mapping;
 import mg.itu.prom16.utilitaire.ModelView;
+import mg.itu.prom16.utilitaire.Outil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -36,10 +38,7 @@ public class FrontController extends HttpServlet {
     
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException{
         PrintWriter out= resp.getWriter();
-        // out.println("Voici les listes des controller");
-        // for (int i = 0; i < listController.size() ; i++) {
-        //     out.println(listController.get(i));
-        // }
+        
         if (erreur!=null) {
             out.println(erreur);
             return;
@@ -54,7 +53,7 @@ public class FrontController extends HttpServlet {
        
         if (existMapping) {
             try {
-                Object value = invoqueMethode(dicoMapping.get(urlTaper));
+                Object value = invoqueMethode(dicoMapping.get(urlTaper),req);
                 ModelViewtoJsp(req,resp,value); // Sprint 4    
             } catch (Exception e) {
                 // TODO: handle exception
@@ -83,8 +82,6 @@ public class FrontController extends HttpServlet {
                 throw new Exception("Il n'y a aucun controller dans "+name_package);
             }
             
-            
-            
         } catch (Exception e) {
             // TODO: handle exception
             System.out.println(e);
@@ -98,6 +95,7 @@ public class FrontController extends HttpServlet {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String path = name_package.replace(".", "/");
         URL packageUrl = classLoader.getResource(path);
+        System.out.println("Le path url "+packageUrl);
         ArrayList<String> liste = new ArrayList<>();
         if (packageUrl==null) {
             
@@ -137,15 +135,32 @@ public class FrontController extends HttpServlet {
                 if (dicoMapping.get(annotGet.value())!=null) {
                     throw new Exception("Duplication de GetMapping "+annotGet.value());
                 }
-                dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName()));
+                dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName(),methodes[j]));
             }
         }
     }
     /* sprint3 */
-    private Object invoqueMethode(Mapping map) throws Exception {
+    private Object invoqueMethode(Mapping map,HttpServletRequest req) throws Exception {
+        /* misy sprint 6 */
         Class c =  Class.forName(map.getClassName());
-        Method meth = c.getMethod(map.getMethodName());
-        return meth.invoke(c.getDeclaredConstructor().newInstance());
+        //Method meth = Outil.searchMethod(map.getMethodName(), c);
+        Method meth = map.getFonction();
+        Parameter[] parameters = meth.getParameters();
+       
+        Object[] arguments= new Object[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            if (req.getParameter(parameters[i].getName())!=null) {
+                arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
+            }
+            else if (parameters[i].getAnnotation(Param.class)!=null) {
+                if(req.getParameter(parameters[i].getAnnotation(Param.class).name())!=null){
+                    arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
+                }    
+            }
+            System.out.println(arguments[i]);
+        }
+        
+        return meth.invoke(c.getDeclaredConstructor().newInstance(),arguments);
     }
     /* sprint 4 */
     private void ModelViewtoJsp(HttpServletRequest req, HttpServletResponse resp,Object value) throws Exception {
