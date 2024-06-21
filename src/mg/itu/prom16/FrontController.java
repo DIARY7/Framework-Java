@@ -149,7 +149,13 @@ public class FrontController extends HttpServlet {
        
         Object[] arguments= new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
-            if (req.getParameter(parameters[i].getName())!=null) {
+            //sprint 7
+            Object class_obj = Outil.checkParamClass(req, parameters[i]);
+            System.out.println("L'objet "+class_obj);
+            if (class_obj!=null) {
+                arguments[i] = class_obj; 
+            }
+            else if (req.getParameter(parameters[i].getName())!=null) {
                 arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
             }
             else if (parameters[i].getAnnotation(Param.class)!=null) {
@@ -157,7 +163,7 @@ public class FrontController extends HttpServlet {
                     arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
                 }    
             }
-            System.out.println(arguments[i]);
+            
         }
         
         return meth.invoke(c.getDeclaredConstructor().newInstance(),arguments);
