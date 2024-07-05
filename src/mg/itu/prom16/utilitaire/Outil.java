@@ -8,6 +8,7 @@ import java.util.Enumeration;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.annotation.AnnotAttribut;
 import mg.itu.prom16.annotation.Param;
 
@@ -23,6 +24,7 @@ public class Outil {
         }
         return cible;
     }
+    
     /* sprint 7 */
     public static Object checkParamClass(HttpServletRequest req,Parameter param) throws Exception{
         Enumeration<String> params = req.getParameterNames();
@@ -32,11 +34,11 @@ public class Outil {
             // Récupération du nom du paramètre
             String paramName = params.nextElement();
             if (paramName.contains(".")) {
-                if ( param.getName().compareToIgnoreCase(paramName.split("[.]")[0]) == 0 ) {
-                    beforePoint = paramName.split("[.]")[0];
-                    exist = true;
-                    break;
-                }
+                // if ( param.getName().compareToIgnoreCase(paramName.split("[.]")[0]) == 0 ) {
+                //     beforePoint = paramName.split("[.]")[0];
+                //     exist = true;
+                //     break;
+                // }
                 if (param.getAnnotation(Param.class).name().compareToIgnoreCase(paramName.split("[.]")[0])==0) {
                     beforePoint = paramName.split("[.]")[0];
                     exist = true;
@@ -80,7 +82,8 @@ public class Outil {
             }
             if (param.getType()==double.class) {
                 return Double.parseDouble(value);
-            }    
+            }
+                
         } catch (Exception e) {
             // TODO: handle exception
             return 0;
