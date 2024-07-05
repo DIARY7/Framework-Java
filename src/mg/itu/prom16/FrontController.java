@@ -1,5 +1,6 @@
 package mg.itu.prom16;
 import mg.itu.prom16.annotation.*;
+import mg.itu.prom16.utilitaire.CustomSession;
 import mg.itu.prom16.utilitaire.Mapping;
 import mg.itu.prom16.utilitaire.ModelView;
 import mg.itu.prom16.utilitaire.Outil;
@@ -149,20 +150,32 @@ public class FrontController extends HttpServlet {
        
         Object[] arguments= new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
+            
+            /* sprint 8 */
+            if (parameters[i].getType()==CustomSession.class) {
+                arguments[i] = new CustomSession(req.getSession());
+                continue;
+            }
+
+            //Alea
+            if(parameters[i].getAnnotation(Param.class)==null) {
+                throw new Exception("Le parametre "+parameters[i].getName() + " doit être annotée");
+            }
+            
             //sprint 7
             Object class_obj = Outil.checkParamClass(req, parameters[i]);
-            System.out.println("L'objet "+class_obj);
             if (class_obj!=null) {
                 arguments[i] = class_obj; 
             }
-            else if (req.getParameter(parameters[i].getName())!=null) {
-                arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
-            }
-            else if (parameters[i].getAnnotation(Param.class)!=null) {
+            // else if (req.getParameter(parameters[i].getName())!=null) {
+            //     arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
+            // }
+            if (parameters[i].getAnnotation(Param.class)!=null) {
                 if(req.getParameter(parameters[i].getAnnotation(Param.class).name())!=null){
                     arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
                 }    
             }
+            
             
         }
         
