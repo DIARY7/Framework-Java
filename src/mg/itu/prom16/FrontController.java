@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import com.google.gson.Gson;
 
 import java.net.URL;
 
@@ -55,6 +56,13 @@ public class FrontController extends HttpServlet {
         if (existMapping) {
             try {
                 Object value = invoqueMethode(dicoMapping.get(urlTaper),req);
+                /* sprint 9 */
+                Object json = Outil.returnIfGson(dicoMapping.get(urlTaper).getFonction(), value);
+                if ( json!=null) {
+                    resp.setContentType("application/json");
+                    resp.getWriter().write((String)json);
+                    return;
+                }
                 ModelViewtoJsp(req,resp,value); // Sprint 4    
             } catch (Exception e) {
                 // TODO: handle exception
