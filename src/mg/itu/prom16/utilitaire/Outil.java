@@ -3,14 +3,18 @@ package mg.itu.prom16.utilitaire;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.annotation.*;
 import java.time.LocalDate;
 import java.util.Enumeration;
 
+import com.google.gson.Gson;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import mg.itu.prom16.annotation.AnnotAttribut;
 import mg.itu.prom16.annotation.Param;
+import mg.itu.prom16.annotation.RestApi;
+
 
 public class Outil {
     public static Method searchMethod(String nameMethode,Class c){
@@ -125,5 +129,14 @@ public class Outil {
         }
         return null;
                 
+    }
+    /* sprint 9 */
+    public static Object returnIfGson(Method m,Object value){
+        if (m.isAnnotationPresent(RestApi.class)) {
+           Gson gson = new Gson();
+           return gson.toJson(value);
+        }
+        return null;
+        
     }
 }
