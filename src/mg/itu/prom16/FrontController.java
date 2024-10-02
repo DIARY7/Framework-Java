@@ -12,7 +12,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import com.google.gson.Gson;
 
 import java.net.URL;
 
@@ -139,12 +138,18 @@ public class FrontController extends HttpServlet {
         Method[] methodes = c.getMethods();
         System.out.println("Le nombre des methodes dans  "+ c.getSimpleName() + " est : "+methodes.length);
         for (int j = 0; j < methodes.length; j++) {
-            Get annotGet = methodes[j].getAnnotation(Get.class); 
+            GetMapping annotGet = methodes[j].getAnnotation(GetMapping.class); 
             if ( annotGet !=null ) {
                 if (dicoMapping.get(annotGet.value())!=null) {
                     throw new Exception("Duplication de GetMapping "+annotGet.value());
                 }
-                dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName(),methodes[j]));
+                /* sprint 10 */
+                String verb = "GET";
+                if (methodes[j].isAnnotationPresent(POST.class)) {
+                    verb = "POST";
+                }
+                /*----------------------- */
+                dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName(),methodes[j],verb));
             }
         }
     }
@@ -155,6 +160,11 @@ public class FrontController extends HttpServlet {
         //Method meth = Outil.searchMethod(map.getMethodName(), c);
         Method meth = map.getFonction();
         Parameter[] parameters = meth.getParameters();
+        /* sprint 10 */
+        if (req.getMethod().compareToIgnoreCase(map.getVerb())!=0) {
+            throw new Exception("Methode incorrecte");
+        }
+        /*------------------- */
        
         Object[] arguments= new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
