@@ -4,6 +4,7 @@ import mg.itu.prom16.utilitaire.CustomSession;
 import mg.itu.prom16.utilitaire.Mapping;
 import mg.itu.prom16.utilitaire.ModelView;
 import mg.itu.prom16.utilitaire.Outil;
+import mg.itu.prom16.utilitaire.VerbMethode;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class FrontController extends HttpServlet {
         PrintWriter out= resp.getWriter();
         
         if (erreur!=null) {
-            out.println(erreur);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,erreur);
             return;
         }
         boolean existMapping = false;
@@ -56,7 +57,7 @@ public class FrontController extends HttpServlet {
             try {
                 Object value = invoqueMethode(dicoMapping.get(urlTaper),req);
                 /* sprint 9 */
-                Object json = Outil.returnIfGson(dicoMapping.get(urlTaper).getFonction(), value);
+                Object json = Outil.returnIfGson(dicoMapping.get(urlTaper).getMethodExec(req.getMethod()), value);
                 if ( json!=null) {
                     resp.setContentType("application/json");
                     resp.getWriter().write((String)json);
@@ -65,13 +66,13 @@ public class FrontController extends HttpServlet {
                 ModelViewtoJsp(req,resp,value); // Sprint 4    
             } catch (Exception e) {
                 // TODO: handle exception
-                out.println(e.getMessage());
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e.getMessage());
                 e.printStackTrace();
             }
                          
         }
         else{    
-            out.println("URL introuvable");
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "URL introuvable");
         }
         
     }
@@ -137,33 +138,52 @@ public class FrontController extends HttpServlet {
     public void setDicoMapping(Class c) throws Exception {
         Method[] methodes = c.getMethods();
         System.out.println("Le nombre des methodes dans  "+ c.getSimpleName() + " est : "+methodes.length);
-        for (int j = 0; j < methodes.length; j++) {
-            GetMapping annotGet = methodes[j].getAnnotation(GetMapping.class); 
-            if ( annotGet !=null ) {
-                if (dicoMapping.get(annotGet.value())!=null) {
-                    throw new Exception("Duplication de GetMapping "+annotGet.value());
+        try {
+            for (int j = 0; j < methodes.length; j++) {
+                GetMapping annotGet = methodes[j].getAnnotation(GetMapping.class); 
+                if ( annotGet !=null ) {
+                    if (dicoMapping.get(annotGet.value())!=null) {
+                        String verb = Outil.getVerb(methodes[j]);
+                        boolean sameVerb = ((Mapping) dicoMapping.get(annotGet.value())).isSameVerb(verb);
+                        if (sameVerb) {
+                            throw new Exception("Duplication du verb "+verb + " sur l'url "+annotGet.value());
+                        }
+                        else{
+                            VerbMethode vm = new VerbMethode(verb,methodes[j]);
+                            ((Mapping) dicoMapping.get(annotGet.value())).getVerbeMethodes().add(vm);
+                            continue;
+                        }
+                        //throw new Exception("Duplication de GetMapping "+annotGet.value());
+                    }
+                    /* sprint 10 */
+                    String verb = null;
+                    verb = Outil.getVerb(methodes[j]);
+                    dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName(),methodes[j],verb));
+                
+                    /*----------------------- */
+    
+                    /* */
                 }
-                /* sprint 10 */
-                String verb = "GET";
-                if (methodes[j].isAnnotationPresent(POST.class)) {
-                    verb = "POST";
-                }
-                /*----------------------- */
-                dicoMapping.put(annotGet.value(), new Mapping( c.getName() , methodes[j].getName(),methodes[j],verb));
-            }
+            }    
+        } catch (Exception e) {
+            // TODO: handle exception
+            throw e;
         }
+        
     }
     /* sprint3 */
     private Object invoqueMethode(Mapping map,HttpServletRequest req) throws Exception {
         /* misy sprint 6 */
         Class c =  Class.forName(map.getClassName());
         //Method meth = Outil.searchMethod(map.getMethodName(), c);
-        Method meth = map.getFonction();
+        /* sprint 10 ameliorer */
+        Method meth = map.getMethodExec(req.getMethod());
         Parameter[] parameters = meth.getParameters();
+        System.out.println("La methode  "+ meth.getName() +" ,"+req.getMethod() + " Le nombre de parametres "+parameters.length);
         /* sprint 10 */
-        if (req.getMethod().compareToIgnoreCase(map.getVerb())!=0) {
-            throw new Exception("Methode incorrecte");
-        }
+        // if (req.getMethod().compareToIgnoreCase(map.getVerb())!=0) {
+        //     throw new Exception("Methode incorrecte");
+        // }
         /*------------------- */
        
         Object[] arguments= new Object[parameters.length];
