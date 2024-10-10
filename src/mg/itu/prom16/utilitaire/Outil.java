@@ -3,7 +3,6 @@ package mg.itu.prom16.utilitaire;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.lang.annotation.*;
 import java.time.LocalDate;
 import java.util.Enumeration;
 
@@ -12,6 +11,8 @@ import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.AnnotAttribut;
+import mg.itu.prom16.annotation.GET;
+import mg.itu.prom16.annotation.POST;
 import mg.itu.prom16.annotation.Param;
 import mg.itu.prom16.annotation.RestApi;
 
@@ -138,5 +139,19 @@ public class Outil {
         }
         return null;
         
+    }
+    /* sprint 10 */
+    public static String getVerb(Method meth) throws Exception {
+        String verb="GET";
+        if (meth.isAnnotationPresent(POST.class)) {
+            verb = "POST";
+        }
+        if (meth.isAnnotationPresent(GET.class)) {
+            verb = "GET";
+        }
+        // if (verb==null) {
+        //     throw new Exception("La methode "+ meth.getName() + " ne contenant pas de method");
+        // }
+        return verb;
     }
 }
