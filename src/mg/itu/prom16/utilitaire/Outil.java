@@ -39,11 +39,11 @@ public class Outil {
             // Récupération du nom du paramètre
             String paramName = params.nextElement();
             if (paramName.contains(".")) {
-                // if ( param.getName().compareToIgnoreCase(paramName.split("[.]")[0]) == 0 ) {
-                //     beforePoint = paramName.split("[.]")[0];
-                //     exist = true;
-                //     break;
-                // }
+                if ( param.getName().compareToIgnoreCase(paramName.split("[.]")[0]) == 0 ) {
+                    beforePoint = paramName.split("[.]")[0];
+                    exist = true;
+                    break;
+                }
                 if (param.getAnnotation(Param.class).name().compareToIgnoreCase(paramName.split("[.]")[0])==0) {
                     beforePoint = paramName.split("[.]")[0];
                     exist = true;

@@ -14,14 +14,18 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import jakarta.servlet.http.Part;
+
 import java.net.URL;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@MultipartConfig
 public class FrontController extends HttpServlet {
     // Ho an'ny sprint 1,2
     ArrayList<String> listController;
@@ -137,7 +141,7 @@ public class FrontController extends HttpServlet {
     /* sprint2 */
     public void setDicoMapping(Class c) throws Exception {
         Method[] methodes = c.getMethods();
-        System.out.println("Le nombre des methodes dans  "+ c.getSimpleName() + " est : "+methodes.length);
+        
         try {
             for (int j = 0; j < methodes.length; j++) {
                 GetMapping annotGet = methodes[j].getAnnotation(GetMapping.class); 
@@ -194,24 +198,36 @@ public class FrontController extends HttpServlet {
                 arguments[i] = new CustomSession(req.getSession());
                 continue;
             }
+            /* sprint 12 */
+            else if (parameters[i].getType() == Part.class) {
+                if (parameters[i].getAnnotation(Param.class)!=null) {
+                    arguments[i] = (Part) req.getPart(parameters[i].getAnnotation(Param.class).name());    
+                }
+                else{
+                    arguments[i] = (Part) req.getPart(parameters[i].getName());
+                }
+                continue;
+            }
 
             //Alea
-            if(parameters[i].getAnnotation(Param.class)==null) {
-                throw new Exception("Le parametre "+parameters[i].getName() + " doit être annotée");
-            }
+            // if(parameters[i].getAnnotation(Param.class)==null) {
+            //     throw new Exception("Le parametre "+parameters[i].getName() + " doit être annotée");
+            // }
             
             //sprint 7
             Object class_obj = Outil.checkParamClass(req, parameters[i]);
             if (class_obj!=null) {
                 arguments[i] = class_obj; 
             }
-            // else if (req.getParameter(parameters[i].getName())!=null) {
-            //     arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
-            // }
+           
             if (parameters[i].getAnnotation(Param.class)!=null) {
                 if(req.getParameter(parameters[i].getAnnotation(Param.class).name())!=null){
                     arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
                 }    
+            }
+
+            else if (req.getParameter(parameters[i].getName())!=null) {
+                arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
             }
             
             
