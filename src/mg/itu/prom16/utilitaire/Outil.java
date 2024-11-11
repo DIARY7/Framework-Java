@@ -15,6 +15,9 @@ import mg.itu.prom16.annotation.GET;
 import mg.itu.prom16.annotation.POST;
 import mg.itu.prom16.annotation.Param;
 import mg.itu.prom16.annotation.RestApi;
+import mg.itu.prom16.annotation.Attribut.Email;
+import mg.itu.prom16.annotation.Attribut.Numeric;
+import mg.itu.prom16.annotation.Attribut.Date;
 
 
 public class Outil {
@@ -60,14 +63,17 @@ public class Outil {
                 String nameColonne = (attributs[i].getName().charAt(0)+"").toUpperCase() + attributs[i].getName().substring(1);
                 Method setter = c.getDeclaredMethod("set"+nameColonne,attributs[i].getType());
                 String name = attributs[i].getName();
-                
                 if (attributs[i].getAnnotation(AnnotAttribut.class)!=null) {
                     String name_in_annot = attributs[i].getAnnotation(AnnotAttribut.class).name();
                     if (req.getParameter(beforePoint+"."+name_in_annot)!=null) {
                         name = name_in_annot;
                     }
                 }
+                
                 String value = req.getParameter(beforePoint+"."+name);
+                // Sprint 13
+                checkTypeAttribut(attributs[i],value);
+                //
                 setter.invoke(ob, parseToClass(attributs[i].getType(),value)); 
             }
             return ob;    
@@ -153,5 +159,35 @@ public class Outil {
         //     throw new Exception("La methode "+ meth.getName() + " ne contenant pas de method");
         // }
         return verb;
+    }
+    /* Sprint 13 */
+    public static void checkTypeAttribut(Field attribut,String valeur) throws Exception {
+        
+        if (attribut.isAnnotationPresent(Numeric.class)) {
+            try {
+                Integer.parseInt(valeur);
+                Double.parseDouble(valeur);
+                
+            } catch (Exception e) {
+                // TODO: handle exception
+                e.printStackTrace();
+                throw new Exception("La valeur doit être de type numeric pour "+attribut.getName());
+            }
+        }
+        if (attribut.isAnnotationPresent(Email.class)) {
+            String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
+            if (!valeur.matches(emailRegex)) {
+                throw new Exception("Email invalide pour l'attribut "+attribut.getName());
+            }
+        }
+        if (attribut.isAnnotationPresent(Date.class)) {
+            try {
+                LocalDate.parse(valeur);
+            } catch (Exception e) {
+                e.printStackTrace();
+                // TODO: handle exception
+                throw new Exception("Date invalide sur l'attribut "+attribut.getName());
+            }
+        }
     }
 }
