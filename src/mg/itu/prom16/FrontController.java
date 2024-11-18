@@ -1,6 +1,7 @@
 package mg.itu.prom16;
 import mg.itu.prom16.annotation.*;
 import mg.itu.prom16.utilitaire.CustomSession;
+import mg.itu.prom16.utilitaire.DataAndException;
 import mg.itu.prom16.utilitaire.Mapping;
 import mg.itu.prom16.utilitaire.ModelView;
 import mg.itu.prom16.utilitaire.Outil;
@@ -51,6 +52,8 @@ public class FrontController extends HttpServlet {
         }
         boolean existMapping = false;
         String urlTaper = req.getRequestURL().toString().split(baseUrl)[1];
+        System.out.println("L'URL taper est "+urlTaper);
+        System.out.println( dicoMapping.get(urlTaper));;
         for (String key : dicoMapping.keySet()) {
             if (key.compareTo(urlTaper)==0) {
                 existMapping = true;
@@ -59,7 +62,10 @@ public class FrontController extends HttpServlet {
        
         if (existMapping) {
             try {
-                Object value = invoqueMethode(dicoMapping.get(urlTaper),req);
+                /* Sprint 14 */
+                DataAndException dataException = new DataAndException();
+                Object value = invoqueMethode(dicoMapping.get(urlTaper),req,dataException);
+                
                 /* sprint 9 */
                 Object json = Outil.returnIfGson(dicoMapping.get(urlTaper).getMethodExec(req.getMethod()), value);
                 if ( json!=null) {
@@ -67,6 +73,17 @@ public class FrontController extends HttpServlet {
                     resp.getWriter().write((String)json);
                     return;
                 }
+                /* Sprint 14 */
+                if (dataException.getListeException().size() > 0) {
+                    String urlPrecedent = req.getHeader("Referer").split(baseUrl)[1];
+                    System.out.println("L'url precedent est " + urlPrecedent);
+                    System.out.println(dicoMapping.get(urlPrecedent));
+                    Object valueurP = invoqueMethode(dicoMapping.get(urlPrecedent),req,null);
+                    Outil.setErreurAndException(req, dataException);
+                    ModelViewtoJsp(req, resp, valueurP);
+                    return;
+                }
+
                 ModelViewtoJsp(req,resp,value); // Sprint 4    
             } catch (Exception e) {
                 // TODO: handle exception
@@ -176,12 +193,15 @@ public class FrontController extends HttpServlet {
         
     }
     /* sprint3 */
-    private Object invoqueMethode(Mapping map,HttpServletRequest req) throws Exception {
+    private Object invoqueMethode(Mapping map,HttpServletRequest req,DataAndException dataException) throws Exception {
         /* misy sprint 6 */
         Class c =  Class.forName(map.getClassName());
         //Method meth = Outil.searchMethod(map.getMethodName(), c);
         /* sprint 10 ameliorer */
         Method meth = map.getMethodExec(req.getMethod());
+        if (meth==null) { /* Rehefa misy erreur */
+            meth = map.getMethodExec("GET");
+        } 
         Parameter[] parameters = meth.getParameters();
         System.out.println("La methode  "+ meth.getName() +" ,"+req.getMethod() + " Le nombre de parametres "+parameters.length);
         /* sprint 10 */
@@ -215,7 +235,7 @@ public class FrontController extends HttpServlet {
             // }
             
             //sprint 7
-            Object class_obj = Outil.checkParamClass(req, parameters[i]);
+            Object class_obj = Outil.checkParamClass(req, parameters[i],dataException);
             if (class_obj!=null) {
                 arguments[i] = class_obj; 
             }
@@ -228,8 +248,7 @@ public class FrontController extends HttpServlet {
 
             else if (req.getParameter(parameters[i].getName())!=null) {
                 arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
-            }
-            
+            }        
             
         }
         
@@ -254,6 +273,7 @@ public class FrontController extends HttpServlet {
             throw new Exception("Valeur de retour non Valide");
         }
         
-    } 
+    }
+    
     
 }
