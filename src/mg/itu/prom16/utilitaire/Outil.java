@@ -4,10 +4,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 
 import com.google.gson.Gson;
 
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.AnnotAttribut;
@@ -17,6 +20,7 @@ import mg.itu.prom16.annotation.Param;
 import mg.itu.prom16.annotation.RestApi;
 import mg.itu.prom16.annotation.Attribut.Email;
 import mg.itu.prom16.annotation.Attribut.Numeric;
+import mg.itu.prom16.annotation.Attribut.Required;
 import mg.itu.prom16.annotation.Attribut.Date;
 
 
@@ -34,7 +38,7 @@ public class Outil {
     }
     
     /* sprint 7 */
-    public static Object checkParamClass(HttpServletRequest req,Parameter param) throws Exception{
+    public static Object checkParamClass(HttpServletRequest req,Parameter param,DataAndException dataException) throws Exception{
         Enumeration<String> params = req.getParameterNames();
         boolean exist = false;
         String beforePoint = "";
@@ -71,8 +75,11 @@ public class Outil {
                 }
                 
                 String value = req.getParameter(beforePoint+"."+name);
-                // Sprint 13
-                checkTypeAttribut(attributs[i],value);
+                // Sprint 13 , Sprint 14
+                if (dataException!=null) {
+                    dataException.ajouterValeur(beforePoint+"."+name, value);
+                    checkTypeAttribut(attributs[i],value,beforePoint+"."+name,dataException);    
+                }
                 //
                 setter.invoke(ob, parseToClass(attributs[i].getType(),value)); 
             }
@@ -160,9 +167,18 @@ public class Outil {
         // }
         return verb;
     }
-    /* Sprint 13 */
-    public static void checkTypeAttribut(Field attribut,String valeur) throws Exception {
+    /* Sprint 13 et Sprint 14 */
+    public static void checkTypeAttribut(Field attribut,String valeur,String nameParameter,DataAndException dataException) throws Exception {
         
+        ArrayList<String> listeException = new ArrayList<>(); 
+        if (attribut.isAnnotationPresent(Required.class)) {
+            if (valeur.trim().isEmpty()) {
+                System.out.println("D tena nande tato le "+attribut.getName());
+                listeException.add("L'attribut "+attribut.getName()+" ne doit pas être null");
+            }
+            
+        }
+
         if (attribut.isAnnotationPresent(Numeric.class)) {
             try {
                 Integer.parseInt(valeur);
@@ -170,24 +186,41 @@ public class Outil {
                 
             } catch (Exception e) {
                 // TODO: handle exception
-                e.printStackTrace();
-                throw new Exception("La valeur doit être de type numeric pour "+attribut.getName());
+                listeException.add("La valeur doit être de type numeric pour "+attribut.getName());
             }
         }
         if (attribut.isAnnotationPresent(Email.class)) {
             String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
             if (!valeur.matches(emailRegex)) {
-                throw new Exception("Email invalide pour l'attribut "+attribut.getName());
+                listeException.add("Email invalide pour l'attribut "+attribut.getName());
             }
         }
         if (attribut.isAnnotationPresent(Date.class)) {
             try {
                 LocalDate.parse(valeur);
             } catch (Exception e) {
-                e.printStackTrace();
                 // TODO: handle exception
-                throw new Exception("Date invalide sur l'attribut "+attribut.getName());
+                listeException.add("Date invalide sur l'attribut "+attribut.getName());
             }
+        }
+        dataException.ajouterException(nameParameter, listeException);
+        
+    }
+    /* Sprint 14 */
+    public static void setErreurAndException(HttpServletRequest req , DataAndException dataException){
+        
+        // Parcourir toutes les clés
+        for (String key : dataException.getListeException().keySet()) {
+            String chaineErreur = "";
+            for (int i = 0; i < dataException.getListeException().get(key).size(); i++) {
+                chaineErreur+=dataException.getListeException().get(key).get(i)+";";
+            }
+            System.out.println("Chaine erreur = "+chaineErreur);
+            req.setAttribute("error_"+key, chaineErreur);
+        }
+
+        for (String key : dataException.getListeValeurs().keySet()) {
+            req.setAttribute("default_"+key, dataException.getListeValeurs().get(key));
         }
     }
 }
