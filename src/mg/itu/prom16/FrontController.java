@@ -75,10 +75,11 @@ public class FrontController extends HttpServlet {
                 }
                 /* Sprint 14 */
                 if (dataException.getListeException().size() > 0) {
-                    String urlPrecedent = req.getHeader("Referer").split(baseUrl)[1];
-                    System.out.println("L'url precedent est " + urlPrecedent);
-                    System.out.println(dicoMapping.get(urlPrecedent));
-                    Object valueurP = invoqueMethode(dicoMapping.get(urlPrecedent),req,null);
+                    //String urlPrecedent = req.getHeader("Referer").split(baseUrl)[1];
+                    String urlError = ((ModelView) value).getUrlError();
+                    System.out.println("L'url precedent est " + urlError);
+                    System.out.println(dicoMapping.get(urlError));
+                    Object valueurP = invoqueMethode(dicoMapping.get(urlError),req,null);
                     Outil.setErreurAndException(req, dataException);
                     ModelViewtoJsp(req, resp, valueurP);
                     return;
