@@ -53,7 +53,7 @@ public class FrontController extends HttpServlet {
         boolean existMapping = false;
         String urlTaper = req.getRequestURL().toString().split(baseUrl)[1];
         System.out.println("L'URL taper est "+urlTaper);
-        System.out.println( dicoMapping.get(urlTaper));;
+        System.out.println( dicoMapping.get(urlTaper));
         for (String key : dicoMapping.keySet()) {
             if (key.compareTo(urlTaper)==0) {
                 existMapping = true;
@@ -159,7 +159,6 @@ public class FrontController extends HttpServlet {
     /* sprint2 */
     public void setDicoMapping(Class c) throws Exception {
         Method[] methodes = c.getMethods();
-        
         try {
             for (int j = 0; j < methodes.length; j++) {
                 GetMapping annotGet = methodes[j].getAnnotation(GetMapping.class); 

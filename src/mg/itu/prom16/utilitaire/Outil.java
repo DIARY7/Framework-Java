@@ -14,7 +14,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.AnnotAttribut;
+import mg.itu.prom16.annotation.Anonymous;
 import mg.itu.prom16.annotation.Auth;
+import mg.itu.prom16.annotation.AuthCtrl;
 import mg.itu.prom16.annotation.GET;
 import mg.itu.prom16.annotation.POST;
 import mg.itu.prom16.annotation.Param;
@@ -235,17 +237,32 @@ public class Outil {
         throw new Exception("Le role "+ role+ " n' a pas acces a cette page");
     }
     public static void checkAuthentification(Method meth,Parameter[] parameters,HttpServletRequest req ) throws Exception {
-        if (!meth.isAnnotationPresent(Auth.class)) {
+        if (!meth.isAnnotationPresent(Auth.class) && !meth.getDeclaringClass().isAnnotationPresent(AuthCtrl.class)) {
             return;
         }
+        /* Sprint 16 */
+        boolean authClass = false;
+        if (meth.getDeclaringClass().isAnnotationPresent(AuthCtrl.class)) {
+            authClass = true;
+        }
+        /***************** */
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i].getType()==CustomSession.class) {
                 CustomSession session = new CustomSession(req.getSession());
                 if (session.get("role")==null) {
                     throw new Exception(" Vous devez vous authentifier ");
                 }
-                Auth annot = meth.getAnnotation(Auth.class);
-                String[] rolesAcceptables = annot.roles();
+                String[] rolesAcceptables = null;
+                /* sprint 16 */
+                if (!authClass) {
+                    rolesAcceptables = meth.getAnnotation(Auth.class).roles();
+                }
+                else{
+                    if (meth.isAnnotationPresent(Anonymous.class)) {
+                        return;
+                    }
+                    rolesAcceptables = meth.getDeclaringClass().getAnnotation(AuthCtrl.class).roles();
+                }
                 checkRole(rolesAcceptables, (String) session.get("role"));
                 break;
             }
