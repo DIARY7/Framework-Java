@@ -210,6 +210,10 @@ public class FrontController extends HttpServlet {
         //     throw new Exception("Methode incorrecte");
         // }
         /*------------------- */
+
+        /* sprint 15 */
+        Outil.checkAuthentification(meth, parameters, req);
+        /* ----------------- */
        
         Object[] arguments= new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {

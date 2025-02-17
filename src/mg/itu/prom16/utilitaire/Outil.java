@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotation.AnnotAttribut;
+import mg.itu.prom16.annotation.Auth;
 import mg.itu.prom16.annotation.GET;
 import mg.itu.prom16.annotation.POST;
 import mg.itu.prom16.annotation.Param;
@@ -221,6 +222,33 @@ public class Outil {
 
         for (String key : dataException.getListeValeurs().keySet()) {
             req.setAttribute("default_"+key, dataException.getListeValeurs().get(key));
+        }
+    }
+
+    /* sprint 15 */
+    public static void checkRole(String[] rolesAcceptables , String role ) throws Exception{
+        for (int i = 0; i < rolesAcceptables.length; i++) {
+            if (rolesAcceptables[i].compareToIgnoreCase(role)==0) {
+                return;
+            }
+        }
+        throw new Exception("Le role "+ role+ " n' a pas acces a cette page");
+    }
+    public static void checkAuthentification(Method meth,Parameter[] parameters,HttpServletRequest req ) throws Exception {
+        if (!meth.isAnnotationPresent(Auth.class)) {
+            return;
+        }
+        for (int i = 0; i < parameters.length; i++) {
+            if (parameters[i].getType()==CustomSession.class) {
+                CustomSession session = new CustomSession(req.getSession());
+                if (session.get("role")==null) {
+                    throw new Exception(" Vous devez vous authentifier ");
+                }
+                Auth annot = meth.getAnnotation(Auth.class);
+                String[] rolesAcceptables = annot.roles();
+                checkRole(rolesAcceptables, (String) session.get("role"));
+                break;
+            }
         }
     }
 }
