@@ -52,8 +52,7 @@ public class FrontController extends HttpServlet {
         }
         boolean existMapping = false;
         String urlTaper = req.getRequestURL().toString().split(baseUrl)[1];
-        System.out.println("L'URL taper est "+urlTaper);
-        System.out.println( dicoMapping.get(urlTaper));;
+        System.out.println( dicoMapping.get(urlTaper));
         for (String key : dicoMapping.keySet()) {
             if (key.compareTo(urlTaper)==0) {
                 existMapping = true;
@@ -148,9 +147,7 @@ public class FrontController extends HttpServlet {
                         
                     }
                 }
-            }
-           
-            
+            }        
         }
     
         return liste; 
@@ -159,10 +156,9 @@ public class FrontController extends HttpServlet {
     /* sprint2 */
     public void setDicoMapping(Class c) throws Exception {
         Method[] methodes = c.getMethods();
-        
         try {
             for (int j = 0; j < methodes.length; j++) {
-                GetMapping annotGet = methodes[j].getAnnotation(GetMapping.class); 
+                Url annotGet = methodes[j].getAnnotation(Url.class); 
                 if ( annotGet !=null ) {
                     if (dicoMapping.get(annotGet.value())!=null) {
                         String verb = Outil.getVerb(methodes[j]);
@@ -175,7 +171,7 @@ public class FrontController extends HttpServlet {
                             ((Mapping) dicoMapping.get(annotGet.value())).getVerbeMethodes().add(vm);
                             continue;
                         }
-                        //throw new Exception("Duplication de GetMapping "+annotGet.value());
+                        //throw new Exception("Duplication de Url "+annotGet.value());
                     }
                     /* sprint 10 */
                     String verb = null;
@@ -266,11 +262,21 @@ public class FrontController extends HttpServlet {
         }
         else if (value instanceof ModelView) 
         {
+
             ModelView mv = (ModelView) value;
             HashMap<String, Object> dico = mv.getData();
             for (String key : dico.keySet()) {
                 req.setAttribute(key, dico.get(key));
             }
+            /* Sprint 17 , redirection  */
+            if (mv.getRedirect()!=null) {
+                resp.sendRedirect(mv.getRedirect());
+                System.out.println("Nande tato @ redirect alony izy e");
+                return;
+            }
+
+            /*********************************************** */
+
             RequestDispatcher dispat = req.getRequestDispatcher("/"+mv.getUrl());
             dispat.forward(req,resp);
         }
