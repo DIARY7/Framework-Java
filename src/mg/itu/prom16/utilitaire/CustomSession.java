@@ -1,6 +1,5 @@
 package mg.itu.prom16.utilitaire;
 
-import java.util.HashMap;
 
 import jakarta.servlet.http.HttpSession;
 
