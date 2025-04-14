@@ -262,11 +262,10 @@ public class FrontController extends HttpServlet {
             /* Raha tsy misy vo settena  */
             if(req.getParameter(parameters[i].getName()) == null){
                 if (parameters[i].getType().isPrimitive()) {
-                    System.out.println("Type primitive initialisé a 0 oa");
+                    System.out.println("Type primitive initialisé a 0");
                     arguments[i] = 0;
                 }
             }
-            
         }
         
         return meth.invoke(c.getDeclaredConstructor().newInstance(),arguments);
@@ -287,7 +286,6 @@ public class FrontController extends HttpServlet {
             /* Sprint 17 , redirection  */
             if (mv.getRedirect()!=null) {
                 resp.sendRedirect(mv.getRedirect());
-                System.out.println("Nande tato @ redirect alony izy e");
                 return;
             }
 
