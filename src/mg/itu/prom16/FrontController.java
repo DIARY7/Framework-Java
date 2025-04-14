@@ -213,14 +213,6 @@ public class FrontController extends HttpServlet {
         Object[] arguments= new Object[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) { 
-            
-            if(req.getParameter(parameters[i].getName())==null || parameters[i].getAnnotation(Param.class) ==null ){
-                if (parameters[i].getType().isPrimitive()) {
-                    System.out.print("Type primitive initialisé a 0");
-                    arguments[i] = 0;
-                    continue;
-                }
-            }
 
             /* sprint 8 */
             if (parameters[i].getType()==CustomSession.class) {
@@ -252,15 +244,28 @@ public class FrontController extends HttpServlet {
             if (parameters[i].getAnnotation(Param.class)!=null) {
                 if(req.getParameter(parameters[i].getAnnotation(Param.class).name())!=null){
                     arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
-                }    
+                }
+                else{ /* Raha nul le valeur */
+                    if (parameters[i].getType().isPrimitive()) {
+                        arguments[i] = 0;
+                    }
+                }
+                continue;
+                    
             }
 
             else if (req.getParameter(parameters[i].getName())!=null) {
-                
                 arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
+                continue;
             }
-
-                    
+            
+            /* Raha tsy misy vo settena  */
+            if(req.getParameter(parameters[i].getName()) == null){
+                if (parameters[i].getType().isPrimitive()) {
+                    System.out.println("Type primitive initialisé a 0 oa");
+                    arguments[i] = 0;
+                }
+            }
             
         }
         
