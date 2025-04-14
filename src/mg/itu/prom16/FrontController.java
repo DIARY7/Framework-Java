@@ -14,7 +14,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import jakarta.servlet.http.Part;
 
@@ -211,21 +210,30 @@ public class FrontController extends HttpServlet {
         Outil.checkAuthentification(meth, parameters, req);
         /* ----------------- */
        
-        List listeArgument = new ArrayList<Object>();
+        Object[] arguments= new Object[parameters.length];
+
         for (int i = 0; i < parameters.length; i++) { 
             
+            if(req.getParameter(parameters[i].getName())==null || parameters[i].getAnnotation(Param.class) ==null ){
+                if (parameters[i].getType().isPrimitive()) {
+                    System.out.print("Type primitive initialisé a 0");
+                    arguments[i] = 0;
+                    continue;
+                }
+            }
+
             /* sprint 8 */
             if (parameters[i].getType()==CustomSession.class) {
-                listeArgument.add(new CustomSession(req.getSession()));
+                arguments[i] = new CustomSession(req.getSession());
                 continue;
             }
             /* sprint 12 */
             else if (parameters[i].getType() == Part.class) {
                 if (parameters[i].getAnnotation(Param.class)!=null) {
-                    listeArgument.add((Part) req.getPart(parameters[i].getAnnotation(Param.class).name()));
+                    arguments[i] = (Part) req.getPart(parameters[i].getAnnotation(Param.class).name());    
                 }
                 else{
-                    listeArgument.add((Part) req.getPart(parameters[i].getName()));
+                    arguments[i] = (Part) req.getPart(parameters[i].getName());
                 }
                 continue;
             }
@@ -238,26 +246,24 @@ public class FrontController extends HttpServlet {
             //sprint 7
             Object class_obj = Outil.checkParamClass(req, parameters[i],dataException);
             if (class_obj!=null) {
-                listeArgument.add(class_obj); 
+                arguments[i] = class_obj; 
             }
            
             if (parameters[i].getAnnotation(Param.class)!=null) {
                 if(req.getParameter(parameters[i].getAnnotation(Param.class).name())!=null){
-                    listeArgument.add(Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name())));
+                    arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
                 }    
             }
 
             else if (req.getParameter(parameters[i].getName())!=null) {
-                listeArgument.add(Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName())));
-            }        
+                
+                arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
+            }
+
+                    
             
         }
-
-        Object[] arguments= new Object[listeArgument.size()];
-        for (int i = 0; i < listeArgument.size(); i++) {
-            arguments[i] = listeArgument.get(i);
-        }
-
+        
         return meth.invoke(c.getDeclaredConstructor().newInstance(),arguments);
     }
     /* sprint 4 */
