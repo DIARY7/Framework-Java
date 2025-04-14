@@ -262,7 +262,7 @@ public class FrontController extends HttpServlet {
             /* Raha tsy misy vo settena  */
             if(req.getParameter(parameters[i].getName()) == null){
                 if (parameters[i].getType().isPrimitive()) {
-                    System.out.println("Type primitive initialisé a 0");
+                    System.out.println("Parametre primitive a 0");
                     arguments[i] = 0;
                 }
             }
