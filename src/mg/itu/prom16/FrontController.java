@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import jakarta.servlet.http.Part;
 
@@ -125,7 +126,6 @@ public class FrontController extends HttpServlet {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String path = name_package.replace(".", "/");
         URL packageUrl = classLoader.getResource(path);
-        System.out.println("Le path url "+packageUrl);
         ArrayList<String> liste = new ArrayList<>();
         if (packageUrl==null) {
             
@@ -211,21 +211,21 @@ public class FrontController extends HttpServlet {
         Outil.checkAuthentification(meth, parameters, req);
         /* ----------------- */
        
-        Object[] arguments= new Object[parameters.length];
-        for (int i = 0; i < parameters.length; i++) {
+        List listeArgument = new ArrayList<Object>();
+        for (int i = 0; i < parameters.length; i++) { 
             
             /* sprint 8 */
             if (parameters[i].getType()==CustomSession.class) {
-                arguments[i] = new CustomSession(req.getSession());
+                listeArgument.add(new CustomSession(req.getSession()));
                 continue;
             }
             /* sprint 12 */
             else if (parameters[i].getType() == Part.class) {
                 if (parameters[i].getAnnotation(Param.class)!=null) {
-                    arguments[i] = (Part) req.getPart(parameters[i].getAnnotation(Param.class).name());    
+                    listeArgument.add((Part) req.getPart(parameters[i].getAnnotation(Param.class).name()));
                 }
                 else{
-                    arguments[i] = (Part) req.getPart(parameters[i].getName());
+                    listeArgument.add((Part) req.getPart(parameters[i].getName()));
                 }
                 continue;
             }
@@ -238,21 +238,26 @@ public class FrontController extends HttpServlet {
             //sprint 7
             Object class_obj = Outil.checkParamClass(req, parameters[i],dataException);
             if (class_obj!=null) {
-                arguments[i] = class_obj; 
+                listeArgument.add(class_obj); 
             }
            
             if (parameters[i].getAnnotation(Param.class)!=null) {
                 if(req.getParameter(parameters[i].getAnnotation(Param.class).name())!=null){
-                    arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name()));
+                    listeArgument.add(Outil.parseParam(parameters[i], req.getParameter(parameters[i].getAnnotation(Param.class).name())));
                 }    
             }
 
             else if (req.getParameter(parameters[i].getName())!=null) {
-                arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
+                listeArgument.add(Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName())));
             }        
             
         }
-        
+
+        Object[] arguments= new Object[listeArgument.size()];
+        for (int i = 0; i < listeArgument.size(); i++) {
+            arguments[i] = listeArgument.get(i);
+        }
+
         return meth.invoke(c.getDeclaredConstructor().newInstance(),arguments);
     }
     /* sprint 4 */
