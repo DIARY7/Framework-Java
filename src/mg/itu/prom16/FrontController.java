@@ -214,6 +214,14 @@ public class FrontController extends HttpServlet {
 
         for (int i = 0; i < parameters.length; i++) { 
             
+            if(req.getParameter(parameters[i].getName())==null || parameters[i].getAnnotation(Param.class) ==null ){
+                if (parameters[i].getType().isPrimitive()) {
+                    System.out.print("Type primitive initialisé a 0");
+                    arguments[i] = 0;
+                    continue;
+                }
+            }
+
             /* sprint 8 */
             if (parameters[i].getType()==CustomSession.class) {
                 arguments[i] = new CustomSession(req.getSession());
@@ -252,13 +260,7 @@ public class FrontController extends HttpServlet {
                 arguments[i] = Outil.parseParam(parameters[i], req.getParameter(parameters[i].getName()));
             }
 
-            if(req.getParameter(parameters[i].getName())==null || parameters[i].getAnnotation(Param.class) ==null ){
-                System.out.println("Premier niveau");
-                if (parameters[i].getType().isPrimitive()) {
-                    System.out.print("Type primitive initialisé a 0");
-                    arguments[i] = 0;
-                }
-            }        
+                    
             
         }
         
